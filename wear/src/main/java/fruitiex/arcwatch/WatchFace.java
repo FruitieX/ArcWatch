@@ -26,14 +26,18 @@ public class WatchFace extends CanvasWatchFaceService {
     float textSize = 60;
     float smallTextSize = 20;
 
+    // device screen details
+    boolean mLowBitAmbient;
+    boolean mBurnInProtection;
+
     @Override
     public Engine onCreateEngine() {
         return new Engine();
     }
 
     private class Engine extends CanvasWatchFaceService.Engine {
-        Paint ambientHourPaint;
-        Paint ambientMinutePaint;
+        Paint burninHourPaint;
+        Paint burninMinutePaint;
         Paint activeHourPaint;
         Paint activeMinutePaint;
         Paint mTickPaint;
@@ -53,14 +57,54 @@ public class WatchFace extends CanvasWatchFaceService {
         @Override
         public void onPropertiesChanged(Bundle properties) {
             super.onPropertiesChanged(properties);
+            mLowBitAmbient = properties.getBoolean(PROPERTY_LOW_BIT_AMBIENT, false);
+            mBurnInProtection = properties.getBoolean(PROPERTY_BURN_IN_PROTECTION,
+                    false);
         }
         @Override
         public void onAmbientModeChanged(boolean inAmbientMode) {
             super.onAmbientModeChanged(inAmbientMode);
-            if(inAmbientMode) {
+
+            // ambient burn in protection mode uses outlined fonts
+            if(inAmbientMode && mBurnInProtection) {
                 textPaint.setStyle(Paint.Style.STROKE);
             } else {
                 textPaint.setStyle(Paint.Style.FILL);
+            }
+
+            // low-bit ambient mode disables antialiasing and sets colors to white
+            if(inAmbientMode && mLowBitAmbient) {
+                burninHourPaint.setAntiAlias(false);
+                burninMinutePaint.setAntiAlias(false);
+                activeHourPaint.setAntiAlias(false);
+                activeMinutePaint.setAntiAlias(false);
+                mTickPaint.setAntiAlias(false);
+                textPaint.setAntiAlias(false);
+                smallTextPaint.setAntiAlias(false);
+
+                burninHourPaint.setARGB(255, 255, 255, 255);
+                burninMinutePaint.setARGB(255, 255, 255, 255);
+                activeHourPaint.setARGB(255, 255, 255, 255);
+                activeMinutePaint.setARGB(255, 255, 255, 255);
+                mTickPaint.setARGB(255, 255, 255, 255);
+                textPaint.setARGB(255, 255, 255, 255);
+                smallTextPaint.setARGB(255, 255, 255, 255);
+            } else {
+                burninHourPaint.setAntiAlias(true);
+                burninMinutePaint.setAntiAlias(true);
+                activeHourPaint.setAntiAlias(true);
+                activeMinutePaint.setAntiAlias(true);
+                mTickPaint.setAntiAlias(true);
+                textPaint.setAntiAlias(true);
+                smallTextPaint.setAntiAlias(true);
+
+                burninHourPaint.setARGB(255, 170, 160, 150);
+                burninMinutePaint.setARGB(255, 150, 160, 170);
+                activeHourPaint.setARGB(255, 170, 160, 150);
+                activeMinutePaint.setARGB(255, 150, 160, 170);
+                mTickPaint.setARGB(100, 255, 255, 255);
+                textPaint.setARGB(160, 255, 255, 255);
+                smallTextPaint.setARGB(160, 255, 255, 255);
             }
             invalidate();
         }
@@ -81,17 +125,17 @@ public class WatchFace extends CanvasWatchFaceService {
                     .setShowSystemUiTime(false)
                     .build());
 
-            ambientHourPaint = new Paint();
-            ambientHourPaint.setARGB(255, 170, 160, 150);
-            ambientHourPaint.setStrokeWidth(lineSize);
-            ambientHourPaint.setStyle(Paint.Style.STROKE);
-            ambientHourPaint.setAntiAlias(true);
+            burninHourPaint = new Paint();
+            burninHourPaint.setARGB(255, 170, 160, 150);
+            burninHourPaint.setStrokeWidth(lineSize);
+            burninHourPaint.setStyle(Paint.Style.STROKE);
+            burninHourPaint.setAntiAlias(true);
 
-            ambientMinutePaint = new Paint();
-            ambientMinutePaint.setARGB(255, 150, 160, 170);
-            ambientMinutePaint.setStrokeWidth(lineSize);
-            ambientMinutePaint.setStyle(Paint.Style.STROKE);
-            ambientMinutePaint.setAntiAlias(true);
+            burninMinutePaint = new Paint();
+            burninMinutePaint.setARGB(255, 150, 160, 170);
+            burninMinutePaint.setStrokeWidth(lineSize);
+            burninMinutePaint.setStyle(Paint.Style.STROKE);
+            burninMinutePaint.setAntiAlias(true);
 
             activeHourPaint = new Paint();
             activeHourPaint.setARGB(255, 170, 160, 150);
@@ -150,7 +194,7 @@ public class WatchFace extends CanvasWatchFaceService {
 
             float innerX, innerY, outerX, outerY;
 
-            // Draw the ticks.
+            // draw the ticks/dials
             float innerTickRadius = centerX - 15;
             float outerTickRadius = centerX - 5;
             for (int tickIndex = 0; tickIndex < 12; tickIndex++) {
@@ -166,30 +210,31 @@ public class WatchFace extends CanvasWatchFaceService {
             float minRot = mTime.minute      / 60f * 360;
             float hourRot =  (mTime.hour % 12) / 12f * 360;
 
-            if(!isInAmbientMode()) {
-                canvas.drawArc(new RectF(minOffs + minSize / 2, minOffs + minSize / 2, width - minOffs - minSize / 2, height - minOffs - minSize / 2), -90, minRot, false, activeMinutePaint);
-                canvas.drawArc(new RectF(hourOffs + hourSize / 2, hourOffs + hourSize / 2, width - hourOffs - hourSize / 2, height - hourOffs - hourSize / 2), -90, hourRot, false, activeHourPaint);
-            } else {
-                /* minutes */
+            // draw the clock pointers
+
+            // burn in protection mode is a little involved. we draw the outlines of an
+            // arc by drawing two very thin arcs and connecting them with lines
+            if(isInAmbientMode() && mBurnInProtection) {
+                /* minutes, don't draw anything if min == 0 */
                 if(minRot != 0) {
                     // draw the arcs
-                    canvas.drawArc(new RectF(minOffs, minOffs, width - minOffs, height - minOffs), -90, minRot, false, ambientMinutePaint);
-                    canvas.drawArc(new RectF(minOffs + minSize, minOffs + minSize, width - (minOffs + minSize), height - (minOffs + minSize)), -90, minRot, false, ambientMinutePaint);
+                    canvas.drawArc(new RectF(minOffs, minOffs, width - minOffs, height - minOffs), -90, minRot, false, burninMinutePaint);
+                    canvas.drawArc(new RectF(minOffs + minSize, minOffs + minSize, width - (minOffs + minSize), height - (minOffs + minSize)), -90, minRot, false, burninMinutePaint);
 
                     // draw the "end caps" between the arcs
                     innerX = (float) Math.sin(minRot / 360f * 2 * Math.PI) * (centerX - minOffs - minSize);
                     innerY = (float) -Math.cos(minRot / 360f * 2 * Math.PI) * (centerX - minOffs - minSize);
                     outerX = (float) Math.sin(minRot / 360f * 2 * Math.PI) * (centerX - minOffs);
                     outerY = (float) -Math.cos(minRot / 360f * 2 * Math.PI) * (centerX - minOffs);
-                    canvas.drawLine(centerX, minOffs, centerX, minOffs + minSize, ambientMinutePaint);
-                    canvas.drawLine(centerX + innerX, centerY + innerY, centerX + outerX, centerY + outerY, ambientMinutePaint);
+                    canvas.drawLine(centerX, minOffs, centerX, minOffs + minSize, burninMinutePaint);
+                    canvas.drawLine(centerX + innerX, centerY + innerY, centerX + outerX, centerY + outerY, burninMinutePaint);
                 }
 
-                /* hours */
+                /* hours, don't draw anything if hour == 0 */
                 if(hourRot != 0) {
                     // draw the arcs
-                    canvas.drawArc(new RectF(hourOffs, hourOffs, width - hourOffs, height - hourOffs), -90, hourRot, false, ambientHourPaint);
-                    canvas.drawArc(new RectF(hourOffs + hourSize, hourOffs + hourSize, width - (hourOffs + hourSize), height - (hourOffs + hourSize)), -90, hourRot, false, ambientHourPaint);
+                    canvas.drawArc(new RectF(hourOffs, hourOffs, width - hourOffs, height - hourOffs), -90, hourRot, false, burninHourPaint);
+                    canvas.drawArc(new RectF(hourOffs + hourSize, hourOffs + hourSize, width - (hourOffs + hourSize), height - (hourOffs + hourSize)), -90, hourRot, false, burninHourPaint);
 
                     // draw the "end caps" between the arcs
 
@@ -197,20 +242,23 @@ public class WatchFace extends CanvasWatchFaceService {
                     innerY = (float) -Math.cos(hourRot / 360f * 2 * Math.PI) * (centerX - hourOffs - hourSize);
                     outerX = (float) Math.sin(hourRot / 360f * 2 * Math.PI) * (centerX - hourOffs);
                     outerY = (float) -Math.cos(hourRot / 360f * 2 * Math.PI) * (centerX - hourOffs);
-                    canvas.drawLine(centerX, hourOffs, centerX, hourOffs + hourSize, ambientHourPaint);
-                    canvas.drawLine(centerX + innerX, centerY + innerY, centerX + outerX, centerY + outerY, ambientHourPaint);
+                    canvas.drawLine(centerX, hourOffs, centerX, hourOffs + hourSize, burninHourPaint);
+                    canvas.drawLine(centerX + innerX, centerY + innerY, centerX + outerX, centerY + outerY, burninHourPaint);
                 }
+            } else {
+                canvas.drawArc(new RectF(minOffs + minSize / 2, minOffs + minSize / 2, width - minOffs - minSize / 2, height - minOffs - minSize / 2), -90, minRot, false, activeMinutePaint);
+                canvas.drawArc(new RectF(hourOffs + hourSize / 2, hourOffs + hourSize / 2, width - hourOffs - hourSize / 2, height - hourOffs - hourSize / 2), -90, hourRot, false, activeHourPaint);
             }
 
+            // draw digital clock in the middle
             Rect digitalBounds = new Rect();
             String digital = formatTwoDigitNumber(mTime.hour) + ":" + formatTwoDigitNumber(mTime.minute);
             textPaint.getTextBounds(digital, 0, digital.length(), digitalBounds);
             canvas.drawText(digital, centerX, centerY + digitalBounds.height() / 2, textPaint);
 
+            // draw current date below digital clock
             String date = new SimpleDateFormat("MMM dd").format(new Date());
-
             Rect dateBounds = new Rect();
-            //String date = mTime.format("%d %m");
             smallTextPaint.getTextBounds(date, 0, date.length(), dateBounds);
             canvas.drawText(date, centerX, centerY + dateBounds.height() / 2 + digitalBounds.height(), smallTextPaint);
         }

@@ -24,10 +24,10 @@
                 android:resource="@xml/watch_face" />
             <meta-data
                 android:name="com.google.android.wearable.watchface.preview"
-                android:resource="@drawable/preview" />
+                android:resource="@drawable/preview_sq" />
             <meta-data
                 android:name="com.google.android.wearable.watchface.preview_circular"
-                android:resource="@drawable/preview" />
+                android:resource="@drawable/preview_rd" />
             <intent-filter>
                 <action android:name="android.service.wallpaper.WallpaperService" />
                 <category
