@@ -17,7 +17,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class WatchFace extends CanvasWatchFaceService {
-    private static final String TAG = "AnalogWatchFaceService";
     float hourSize = 12.f;
     float minSize = 6.f;
     float lineSize = 2.f;
@@ -48,9 +47,6 @@ public class WatchFace extends CanvasWatchFaceService {
         @Override
         public void onTimeTick() {
             super.onTimeTick();
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "onTimeTick: ambient = " + isInAmbientMode());
-            }
             invalidate();
         }
 
