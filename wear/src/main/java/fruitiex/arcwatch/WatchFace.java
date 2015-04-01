@@ -1,5 +1,7 @@
 package fruitiex.arcwatch;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -9,7 +11,6 @@ import android.os.Bundle;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.Time;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 
@@ -25,6 +26,14 @@ public class WatchFace extends CanvasWatchFaceService {
     float textSize = 60;
     float smallTextSize = 20;
 
+    Paint burninHourPaint;
+    Paint burninMinutePaint;
+    Paint activeHourPaint;
+    Paint activeMinutePaint;
+    Paint mTickPaint;
+    Paint textPaint;
+    Paint smallTextPaint;
+
     // device screen details
     boolean mLowBitAmbient;
     boolean mBurnInProtection;
@@ -35,15 +44,72 @@ public class WatchFace extends CanvasWatchFaceService {
     }
 
     private class Engine extends CanvasWatchFaceService.Engine {
-        Paint burninHourPaint;
-        Paint burninMinutePaint;
-        Paint activeHourPaint;
-        Paint activeMinutePaint;
-        Paint mTickPaint;
-        Paint textPaint;
-        Paint smallTextPaint;
-        Time mTime;
 
+        Time mTime;
+        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences(getString(R.string.app_name), Context.MODE_PRIVATE);
+
+        public void resetColors() {
+            sharedPref = getApplicationContext().getSharedPreferences(getString(R.string.app_name), Context.MODE_PRIVATE);
+
+            burninHourPaint = new Paint();
+            burninHourPaint.setARGB(255, sharedPref.getInt("hourR", 170),
+                    sharedPref.getInt("hourG", 160),
+                    sharedPref.getInt("hourB", 150));
+            burninHourPaint.setStrokeWidth(lineSize);
+            burninHourPaint.setStyle(Paint.Style.STROKE);
+            burninHourPaint.setAntiAlias(true);
+
+            burninMinutePaint = new Paint();
+            burninMinutePaint.setARGB(255, sharedPref.getInt("minuteR", 150),
+                    sharedPref.getInt("minuteG", 160),
+                    sharedPref.getInt("minuteB", 170));
+            burninMinutePaint.setStrokeWidth(lineSize);
+            burninMinutePaint.setStyle(Paint.Style.STROKE);
+            burninMinutePaint.setAntiAlias(true);
+
+            activeHourPaint = new Paint();
+            activeHourPaint.setARGB(255, sharedPref.getInt("hourR", 170),
+                    sharedPref.getInt("hourG", 160),
+                    sharedPref.getInt("hourB", 150));
+            activeHourPaint.setStrokeWidth(hourSize);
+            activeHourPaint.setStyle(Paint.Style.STROKE);
+            activeHourPaint.setAntiAlias(true);
+
+            activeMinutePaint = new Paint();
+            activeMinutePaint.setARGB(255, sharedPref.getInt("minuteR", 150),
+                    sharedPref.getInt("minuteG", 160),
+                    sharedPref.getInt("minuteB", 170));
+            activeMinutePaint.setStrokeWidth(minSize);
+            activeMinutePaint.setStyle(Paint.Style.STROKE);
+            activeMinutePaint.setAntiAlias(true);
+
+            mTickPaint = new Paint();
+            mTickPaint.setARGB(255, sharedPref.getInt("tickR", 128),
+                    sharedPref.getInt("tickG", 128),
+                    sharedPref.getInt("tickB", 128));
+            mTickPaint.setStrokeWidth(lineSize);
+            mTickPaint.setAntiAlias(true);
+
+            textPaint = new Paint();
+            textPaint.setARGB(255, sharedPref.getInt("textR", 160),
+                    sharedPref.getInt("textG", 160),
+                    sharedPref.getInt("textB", 160));
+            textPaint.setStrokeWidth(lineSize);
+            textPaint.setAntiAlias(true);
+            textPaint.setTextAlign(Paint.Align.CENTER);
+            textPaint.setTextSize(textSize);
+            textPaint.setStyle(Paint.Style.FILL);
+
+            smallTextPaint = new Paint();
+            smallTextPaint.setARGB(255, sharedPref.getInt("textR", 160),
+                    sharedPref.getInt("textG", 160),
+                    sharedPref.getInt("textB", 160));
+            smallTextPaint.setStrokeWidth(lineSize);
+            smallTextPaint.setAntiAlias(true);
+            smallTextPaint.setTextAlign(Paint.Align.CENTER);
+            smallTextPaint.setTextSize(smallTextSize);
+            smallTextPaint.setStyle(Paint.Style.FILL);
+        }
         @Override
         public void onTimeTick() {
             super.onTimeTick();
@@ -64,8 +130,6 @@ public class WatchFace extends CanvasWatchFaceService {
             // ambient burn in protection mode uses outlined fonts
             if(inAmbientMode && mBurnInProtection) {
                 textPaint.setStyle(Paint.Style.STROKE);
-            } else {
-                textPaint.setStyle(Paint.Style.FILL);
             }
 
             // low-bit ambient mode disables antialiasing and sets colors to white
@@ -86,21 +150,7 @@ public class WatchFace extends CanvasWatchFaceService {
                 textPaint.setARGB(255, 255, 255, 255);
                 smallTextPaint.setARGB(255, 255, 255, 255);
             } else {
-                burninHourPaint.setAntiAlias(true);
-                burninMinutePaint.setAntiAlias(true);
-                activeHourPaint.setAntiAlias(true);
-                activeMinutePaint.setAntiAlias(true);
-                mTickPaint.setAntiAlias(true);
-                textPaint.setAntiAlias(true);
-                smallTextPaint.setAntiAlias(true);
-
-                burninHourPaint.setARGB(255, 170, 160, 150);
-                burninMinutePaint.setARGB(255, 150, 160, 170);
-                activeHourPaint.setARGB(255, 170, 160, 150);
-                activeMinutePaint.setARGB(255, 150, 160, 170);
-                mTickPaint.setARGB(100, 255, 255, 255);
-                textPaint.setARGB(160, 255, 255, 255);
-                smallTextPaint.setARGB(160, 255, 255, 255);
+                resetColors();
             }
             invalidate();
         }
@@ -112,6 +162,7 @@ public class WatchFace extends CanvasWatchFaceService {
 
         @Override
         public void onCreate(SurfaceHolder holder) {
+
             super.onCreate(holder);
             setWatchFaceStyle(new WatchFaceStyle.Builder(WatchFace.this)
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_SHORT)
@@ -121,50 +172,7 @@ public class WatchFace extends CanvasWatchFaceService {
                     .setShowSystemUiTime(false)
                     .build());
 
-            burninHourPaint = new Paint();
-            burninHourPaint.setARGB(255, 170, 160, 150);
-            burninHourPaint.setStrokeWidth(lineSize);
-            burninHourPaint.setStyle(Paint.Style.STROKE);
-            burninHourPaint.setAntiAlias(true);
-
-            burninMinutePaint = new Paint();
-            burninMinutePaint.setARGB(255, 150, 160, 170);
-            burninMinutePaint.setStrokeWidth(lineSize);
-            burninMinutePaint.setStyle(Paint.Style.STROKE);
-            burninMinutePaint.setAntiAlias(true);
-
-            activeHourPaint = new Paint();
-            activeHourPaint.setARGB(255, 170, 160, 150);
-            activeHourPaint.setStrokeWidth(hourSize);
-            activeHourPaint.setStyle(Paint.Style.STROKE);
-            activeHourPaint.setAntiAlias(true);
-
-            activeMinutePaint = new Paint();
-            activeMinutePaint.setARGB(255, 150, 160, 170);
-            activeMinutePaint.setStrokeWidth(minSize);
-            activeMinutePaint.setStyle(Paint.Style.STROKE);
-            activeMinutePaint.setAntiAlias(true);
-
-            mTickPaint = new Paint();
-            mTickPaint.setARGB(100, 255, 255, 255);
-            mTickPaint.setStrokeWidth(lineSize);
-            mTickPaint.setAntiAlias(true);
-
-            textPaint = new Paint();
-            textPaint.setARGB(160, 255, 255, 255);
-            textPaint.setStrokeWidth(lineSize);
-            textPaint.setAntiAlias(true);
-            textPaint.setTextAlign(Paint.Align.CENTER);
-            textPaint.setTextSize(textSize);
-            textPaint.setStyle(Paint.Style.FILL);
-            
-            smallTextPaint = new Paint();
-            smallTextPaint.setARGB(160, 255, 255, 255);
-            smallTextPaint.setStrokeWidth(lineSize);
-            smallTextPaint.setAntiAlias(true);
-            smallTextPaint.setTextAlign(Paint.Align.CENTER);
-            smallTextPaint.setTextSize(smallTextSize);
-            smallTextPaint.setStyle(Paint.Style.FILL);
+            resetColors();
 
             mTime = new Time();
         }
