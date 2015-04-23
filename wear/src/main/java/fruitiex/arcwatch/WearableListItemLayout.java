@@ -18,6 +18,8 @@ public class WearableListItemLayout extends LinearLayout
     private final int mFadedCircleColor;
     private final int mChosenCircleColor;
 
+    static Values val;
+
     public WearableListItemLayout(Context context) {
         this(context, null);
     }
@@ -33,6 +35,8 @@ public class WearableListItemLayout extends LinearLayout
         mFadedTextAlpha = 0.5f;
         mFadedCircleColor = getResources().getColor(R.color.grey);
         mChosenCircleColor = getResources().getColor(R.color.blue);
+
+        val = new Values(context);
     }
 
     // Get references to the icon and text in the item layout definition
@@ -48,12 +52,12 @@ public class WearableListItemLayout extends LinearLayout
     @Override
     public void onCenterPosition(boolean animate) {
         mName.setAlpha(1f);
-        ((GradientDrawable) mCircle.getDrawable()).setColor(mChosenCircleColor);
+        ((GradientDrawable) mCircle.getDrawable()).setColor(val.getColor((String) mName.getText()));
     }
 
     @Override
     public void onNonCenterPosition(boolean animate) {
-        ((GradientDrawable) mCircle.getDrawable()).setColor(mFadedCircleColor);
+        ((GradientDrawable) mCircle.getDrawable()).setColor(val.getColor((String) mName.getText()));
         mName.setAlpha(mFadedTextAlpha);
     }
 }

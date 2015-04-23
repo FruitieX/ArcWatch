@@ -14,7 +14,7 @@ public class WatchFaceConfig extends Activity implements WearableListView.ClickL
     private static final int REQUEST_PICK_COLOR = 1;
     private TextView mTextView;
 
-    String[] elements = { "hour", "minute", "textHour", "textMinute", "tick", "date" };
+    public static String[] elements = { "hour", "minute", "textHour", "textMinute", "tick", "date" };
     static Values val;
 
     @Override
