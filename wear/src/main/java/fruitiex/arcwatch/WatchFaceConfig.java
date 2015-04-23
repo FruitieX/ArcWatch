@@ -5,14 +5,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.wearable.view.WearableListView;
 import android.util.Log;
-import android.widget.TextView;
 
 import org.jraf.android.androidwearcolorpicker.app.ColorPickActivity;
 
 public class WatchFaceConfig extends Activity implements WearableListView.ClickListener, WearableListView.OnScrollListener {
-
-    private static final int REQUEST_PICK_COLOR = 1;
-    private TextView mTextView;
 
     public static String[] elements = { "hour", "minute", "textHour", "textMinute", "tick", "date" };
     static Values val;
@@ -50,6 +46,9 @@ public class WatchFaceConfig extends Activity implements WearableListView.ClickL
             int pickedColor = ColorPickActivity.getPickedColor(data);
             Log.d("ArcWatch", "pickedColor=" + Integer.toHexString(pickedColor));
             val.setColor(elements[requestCode], pickedColor);
+            WearableListView listView =
+                (WearableListView) findViewById(R.id.wearable_list);
+            listView.resetLayoutManager();
         }
     }
 

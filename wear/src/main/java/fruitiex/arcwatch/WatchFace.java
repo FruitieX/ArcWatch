@@ -18,7 +18,7 @@ import java.util.Date;
 public class WatchFace extends CanvasWatchFaceService {
     static float hourSize = 12.f;
     static float minSize = 6.f;
-    static float lineSize = 2.f;
+    static float lineSize = 1.5f;
     static float minOffs = 25;
     static float hourOffs = 50;
     static float textSize = 60;
