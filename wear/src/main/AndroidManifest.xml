@@ -27,6 +27,10 @@
             <meta-data
                 android:name="com.google.android.wearable.watchface.preview_circular"
                 android:resource="@drawable/preview_rd" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.wearableConfigurationAction"
+                android:value="fruitiex.arcwatch.watchface.CONFIG_FACE" />
+
             <intent-filter>
                 <action android:name="android.service.wallpaper.WallpaperService" />
                 <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
@@ -34,15 +38,14 @@
         </service>
         <activity
             android:name=".WatchFaceConfig"
-            android:label="@string/app_name">
+            android:label="@string/config_name">
             <intent-filter>
                 <action android:name=
-                    "com.example.android.wearable.watchface.CONFIG_DIGITAL" />
+                    "fruitiex.arcwatch.watchface.CONFIG_FACE" />
                 <category android:name=
                     "com.google.android.wearable.watchface.category.WEARABLE_CONFIGURATION" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
     </application>
-
 </manifest>
