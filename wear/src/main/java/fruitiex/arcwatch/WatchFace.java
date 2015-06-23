@@ -1,19 +1,26 @@
 package fruitiex.arcwatch;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
-import android.text.format.Time;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class WatchFace extends CanvasWatchFaceService {
     static float hourSize = 12.f;
@@ -29,7 +36,6 @@ public class WatchFace extends CanvasWatchFaceService {
     static Paint burninMinutePaint;
     static Paint activeHourPaint;
     static Paint activeMinutePaint;
-    static Paint mTickPaint;
     static Paint textHourPaint;
     static Paint textMinutePaint;
     static Paint datePaint;
@@ -43,7 +49,6 @@ public class WatchFace extends CanvasWatchFaceService {
     public static void resetColors() {
         int hourColor = val.getColor("hour");
         int minuteColor = val.getColor("minute");
-        int tickColor = val.getColor("tick");
         int textHourColor = val.getColor("textHour");
         int textMinuteColor = val.getColor("textMinute");
         int dateColor = val.getColor("date");
@@ -83,14 +88,6 @@ public class WatchFace extends CanvasWatchFaceService {
         activeMinutePaint.setStrokeWidth(minSize);
         activeMinutePaint.setStyle(Paint.Style.STROKE);
         activeMinutePaint.setAntiAlias(true);
-
-        mTickPaint = new Paint();
-        mTickPaint.setARGB(255,
-                Color.red(tickColor),
-                Color.green(tickColor),
-                Color.blue(tickColor));
-        mTickPaint.setStrokeWidth(lineSize);
-        mTickPaint.setAntiAlias(true);
 
         textHourPaint = new Paint();
         textHourPaint.setARGB(255,
@@ -133,12 +130,74 @@ public class WatchFace extends CanvasWatchFaceService {
     }
 
     private class Engine extends CanvasWatchFaceService.Engine {
-        Time mTime;
+        static final int MSG_UPDATE_TIME = 0;
+        static final int INTERACTIVE_UPDATE_RATE_MS = 1000;
+
+        // timezone handling
+        Calendar mCalendar;
+        boolean mRegisteredTimeZoneReceiver = false;
+        final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                mCalendar.setTimeZone(TimeZone.getDefault());
+                invalidate();
+            }
+        };
+        private void registerReceiver() {
+            if (mRegisteredTimeZoneReceiver) {
+                return;
+            }
+            mRegisteredTimeZoneReceiver = true;
+            IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
+            WatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
+        }
+        private void unregisterReceiver() {
+            if (!mRegisteredTimeZoneReceiver) {
+                return;
+            }
+            mRegisteredTimeZoneReceiver = false;
+            WatchFace.this.unregisterReceiver(mTimeZoneReceiver);
+        }
+
+        // handler to update the time once a second in interactive mode
+        final Handler mUpdateTimeHandler = new Handler() {
+            @Override
+            public void handleMessage(Message message) {
+                switch (message.what) {
+                    case MSG_UPDATE_TIME:
+                        invalidate();
+                        if (shouldTimerBeRunning()) {
+                            long timeMs = System.currentTimeMillis();
+                            long delayMs = INTERACTIVE_UPDATE_RATE_MS
+                                    - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
+                            mUpdateTimeHandler
+                                .sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
+                        }
+                        break;
+                }
+            }
+        };
+        private void updateTimer() {
+            mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
+            if (shouldTimerBeRunning()) {
+                mUpdateTimeHandler.sendEmptyMessage(MSG_UPDATE_TIME);
+            }
+        }
+        private boolean shouldTimerBeRunning() {
+            return isVisible() && !isInAmbientMode();
+        }
 
         @Override
         public void onTimeTick() {
             super.onTimeTick();
             invalidate();
+        }
+
+        @Override
+        public void onDestroy() {
+            mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
+            unregisterReceiver();
+            super.onDestroy();
         }
 
         @Override
@@ -148,6 +207,7 @@ public class WatchFace extends CanvasWatchFaceService {
             mBurnInProtection = properties.getBoolean(PROPERTY_BURN_IN_PROTECTION,
                     false);
         }
+
         @Override
         public void onAmbientModeChanged(boolean inAmbientMode) {
             super.onAmbientModeChanged(inAmbientMode);
@@ -158,7 +218,6 @@ public class WatchFace extends CanvasWatchFaceService {
                 burninMinutePaint.setAntiAlias(false);
                 activeHourPaint.setAntiAlias(false);
                 activeMinutePaint.setAntiAlias(false);
-                mTickPaint.setAntiAlias(false);
                 textHourPaint.setAntiAlias(false);
                 textMinutePaint.setAntiAlias(false);
                 datePaint.setAntiAlias(false);
@@ -167,7 +226,6 @@ public class WatchFace extends CanvasWatchFaceService {
                 burninMinutePaint.setARGB(255, 255, 255, 255);
                 activeHourPaint.setARGB(255, 255, 255, 255);
                 activeMinutePaint.setARGB(255, 255, 255, 255);
-                mTickPaint.setARGB(255, 255, 255, 255);
                 textHourPaint.setARGB(255, 255, 255, 255);
                 textMinutePaint.setARGB(255, 255, 255, 255);
                 datePaint.setARGB(255, 255, 255, 255);
@@ -183,11 +241,21 @@ public class WatchFace extends CanvasWatchFaceService {
             }
 
             invalidate();
+            updateTimer();
         }
         @Override
         public void onVisibilityChanged(boolean visible) {
             super.onVisibilityChanged(visible);
-            invalidate();
+
+            if(visible) {
+                registerReceiver();
+
+                mCalendar.setTimeZone(TimeZone.getDefault());
+            } else {
+                unregisterReceiver();
+            }
+
+            updateTimer();
         }
 
         @Override
@@ -204,7 +272,7 @@ public class WatchFace extends CanvasWatchFaceService {
 
             resetColors();
 
-            mTime = new Time();
+            mCalendar = Calendar.getInstance();
         }
 
         private String formatTwoDigitNumber(int hour) {
@@ -215,7 +283,7 @@ public class WatchFace extends CanvasWatchFaceService {
         public void onDraw(Canvas canvas, Rect bounds) {
             canvas.drawColor(Color.BLACK);
 
-            mTime.setToNow();
+            mCalendar.setTimeInMillis(System.currentTimeMillis());
 
             int width = bounds.width();
             int height = bounds.height();
@@ -228,28 +296,19 @@ public class WatchFace extends CanvasWatchFaceService {
 
             float innerX, innerY, outerX, outerY;
 
-            // draw the ticks/dials
-            float innerTickRadius = centerX - 15;
-            float outerTickRadius = centerX - 5;
-            for (int tickIndex = 0; tickIndex < 12; tickIndex++) {
-                float tickRot = (float) (tickIndex * Math.PI * 2 / 12);
-                innerX = (float) Math.sin(tickRot) * innerTickRadius;
-                innerY = (float) -Math.cos(tickRot) * innerTickRadius;
-                outerX = (float) Math.sin(tickRot) * outerTickRadius;
-                outerY = (float) -Math.cos(tickRot) * outerTickRadius;
-                canvas.drawLine(centerX + innerX, centerY + innerY,
-                        centerX + outerX, centerY + outerY, mTickPaint);
-            }
+            float seconds = mCalendar.get(Calendar.SECOND);
+            float minutes = mCalendar.get(Calendar.MINUTE) + seconds / 60f;
+            float hours = mCalendar.get(Calendar.HOUR) + minutes / 60f;
 
-            float minRot = mTime.minute      / 60f * 360;
-            float hourRot =  (mTime.hour % 12) / 12f * 360;
+            float minRot = minutes      / 60f * 360;
+            float hourRot =  (hours % 12) / 12f * 360;
 
             // draw the clock pointers
 
             // burn in protection mode is a little involved. we draw the outlines of an
             // arc by drawing two very thin arcs and connecting them with lines
             if(isInAmbientMode() && mBurnInProtection) {
-                /* minutes, don't draw anything if min == 0 */
+                // minutes, don't draw anything if min == 0
                 if(minRot != 0) {
                     // draw the arcs
                     canvas.drawArc(new RectF(minOffs, minOffs, width - minOffs, height - minOffs), -90, minRot, false, burninMinutePaint);
@@ -264,7 +323,7 @@ public class WatchFace extends CanvasWatchFaceService {
                     canvas.drawLine(centerX + innerX, centerY + innerY, centerX + outerX, centerY + outerY, burninMinutePaint);
                 }
 
-                /* hours, don't draw anything if hour == 0 */
+                // hours, don't draw anything if hour == 0
                 if(hourRot != 0) {
                     // draw the arcs
                     canvas.drawArc(new RectF(hourOffs, hourOffs, width - hourOffs, height - hourOffs), -90, hourRot, false, burninHourPaint);
@@ -286,11 +345,11 @@ public class WatchFace extends CanvasWatchFaceService {
 
             // draw digital clock in the middle
             Rect digitalBounds = new Rect();
-            String digital = formatTwoDigitNumber(mTime.hour) + formatTwoDigitNumber(mTime.minute);
+            String digital = formatTwoDigitNumber(mCalendar.get(Calendar.HOUR)) + formatTwoDigitNumber(mCalendar.get(Calendar.MINUTE));
             textHourPaint.getTextBounds(digital, 0, digital.length(), digitalBounds);
 
-            canvas.drawText(formatTwoDigitNumber(mTime.hour), centerX - digitalBounds.width() / 4 - textSpacing / 2, centerY + digitalBounds.height() / 2, textHourPaint);
-            canvas.drawText(formatTwoDigitNumber(mTime.minute), centerX + digitalBounds.width() / 4 + textSpacing / 2, centerY + digitalBounds.height() / 2, textMinutePaint);
+            canvas.drawText(formatTwoDigitNumber(mCalendar.get(Calendar.HOUR)), centerX - digitalBounds.width() / 4 - textSpacing / 2, centerY + digitalBounds.height() / 2, textHourPaint);
+            canvas.drawText(formatTwoDigitNumber(mCalendar.get(Calendar.MINUTE)), centerX + digitalBounds.width() / 4 + textSpacing / 2, centerY + digitalBounds.height() / 2, textMinutePaint);
 
             // draw current date below digital clock
             String date = new SimpleDateFormat("MMM dd").format(new Date());

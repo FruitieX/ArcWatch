@@ -10,7 +10,7 @@ import org.jraf.android.androidwearcolorpicker.app.ColorPickActivity;
 
 public class WatchFaceConfig extends Activity implements WearableListView.ClickListener, WearableListView.OnScrollListener {
 
-    public static String[] elements = { "hour", "minute", "textHour", "textMinute", "tick", "date" };
+    public static String[] elements = { "hour", "minute", "textHour", "textMinute", "date" };
     static Values val;
 
     @Override
