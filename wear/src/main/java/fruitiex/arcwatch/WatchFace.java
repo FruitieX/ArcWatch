@@ -298,9 +298,13 @@ public class WatchFace extends CanvasWatchFaceService {
 
             float seconds = mCalendar.get(Calendar.SECOND);
             float minutes = mCalendar.get(Calendar.MINUTE) + seconds / 60f;
-            float hours = mCalendar.get(Calendar.HOUR) + minutes / 60f;
+            float hours = mCalendar.get(Calendar.HOUR_OF_DAY) + minutes / 60f;
 
             float minRot = minutes      / 60f * 360;
+
+            if(isInAmbientMode()) {
+                minRot = (float) Math.floor(minutes) / 60f * 360;
+            }
             float hourRot =  (hours % 12) / 12f * 360;
 
             // draw the clock pointers
@@ -345,10 +349,10 @@ public class WatchFace extends CanvasWatchFaceService {
 
             // draw digital clock in the middle
             Rect digitalBounds = new Rect();
-            String digital = formatTwoDigitNumber(mCalendar.get(Calendar.HOUR)) + formatTwoDigitNumber(mCalendar.get(Calendar.MINUTE));
+            String digital = formatTwoDigitNumber(mCalendar.get(Calendar.HOUR_OF_DAY)) + formatTwoDigitNumber(mCalendar.get(Calendar.MINUTE));
             textHourPaint.getTextBounds(digital, 0, digital.length(), digitalBounds);
 
-            canvas.drawText(formatTwoDigitNumber(mCalendar.get(Calendar.HOUR)), centerX - digitalBounds.width() / 4 - textSpacing / 2, centerY + digitalBounds.height() / 2, textHourPaint);
+            canvas.drawText(formatTwoDigitNumber(mCalendar.get(Calendar.HOUR_OF_DAY)), centerX - digitalBounds.width() / 4 - textSpacing / 2, centerY + digitalBounds.height() / 2, textHourPaint);
             canvas.drawText(formatTwoDigitNumber(mCalendar.get(Calendar.MINUTE)), centerX + digitalBounds.width() / 4 + textSpacing / 2, centerY + digitalBounds.height() / 2, textMinutePaint);
 
             // draw current date below digital clock
