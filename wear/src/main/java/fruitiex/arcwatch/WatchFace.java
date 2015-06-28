@@ -20,6 +20,7 @@ import android.view.SurfaceHolder;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 
 public class WatchFace extends CanvasWatchFaceService {
@@ -28,8 +29,8 @@ public class WatchFace extends CanvasWatchFaceService {
     static float lineSize = 1.5f;
     static float minOffs = 25;
     static float hourOffs = 50;
-    static float textSize = 60;
-    static float textSpacing = 10;
+    static float textSize;
+    static float textSpacing;
     static float smallTextSize = 20;
 
     static Paint burninHourPaint;
@@ -38,6 +39,7 @@ public class WatchFace extends CanvasWatchFaceService {
     static Paint activeMinutePaint;
     static Paint textHourPaint;
     static Paint textMinutePaint;
+    static Paint textAmPmPaint;
     static Paint datePaint;
 
     static Values val;
@@ -46,12 +48,17 @@ public class WatchFace extends CanvasWatchFaceService {
     boolean mLowBitAmbient;
     boolean mBurnInProtection;
 
+    static boolean toggle24h;
+
     public static void resetColors() {
-        int hourColor = val.getColor("hour");
-        int minuteColor = val.getColor("minute");
-        int textHourColor = val.getColor("textHour");
-        int textMinuteColor = val.getColor("textMinute");
-        int dateColor = val.getColor("date");
+        int hourColor = val.getColor("Hour");
+        int minuteColor = val.getColor("Minute");
+        int textHourColor = val.getColor("TextHour");
+        int textMinuteColor = val.getColor("TextMinute");
+        int dateColor = val.getColor("Date");
+        toggle24h = val.getBoolean("Toggle24h");
+        textSize = toggle24h ? 60 : 40;
+        textSpacing = toggle24h ? 10 : 6;
 
         burninHourPaint = new Paint();
         burninHourPaint.setARGB(255,
@@ -96,7 +103,6 @@ public class WatchFace extends CanvasWatchFaceService {
                 Color.blue(textHourColor));
         textHourPaint.setStrokeWidth(lineSize);
         textHourPaint.setAntiAlias(true);
-        textHourPaint.setTextAlign(Paint.Align.CENTER);
         textHourPaint.setTextSize(textSize);
         textHourPaint.setStyle(Paint.Style.FILL);
 
@@ -107,9 +113,18 @@ public class WatchFace extends CanvasWatchFaceService {
                 Color.blue(textMinuteColor));
         textMinutePaint.setStrokeWidth(lineSize);
         textMinutePaint.setAntiAlias(true);
-        textMinutePaint.setTextAlign(Paint.Align.CENTER);
         textMinutePaint.setTextSize(textSize);
         textMinutePaint.setStyle(Paint.Style.FILL);
+
+        textAmPmPaint = new Paint();
+        textAmPmPaint.setARGB(255,
+                Color.red(textHourColor),
+                Color.green(textHourColor),
+                Color.blue(textHourColor));
+        textAmPmPaint.setStrokeWidth(lineSize);
+        textAmPmPaint.setAntiAlias(true);
+        textAmPmPaint.setTextSize(textSize);
+        textAmPmPaint.setStyle(Paint.Style.FILL);
 
         datePaint = new Paint();
         datePaint.setARGB(255,
@@ -220,6 +235,7 @@ public class WatchFace extends CanvasWatchFaceService {
                 activeMinutePaint.setAntiAlias(false);
                 textHourPaint.setAntiAlias(false);
                 textMinutePaint.setAntiAlias(false);
+                textAmPmPaint.setAntiAlias(false);
                 datePaint.setAntiAlias(false);
 
                 burninHourPaint.setARGB(255, 255, 255, 255);
@@ -237,6 +253,7 @@ public class WatchFace extends CanvasWatchFaceService {
             if(inAmbientMode && mBurnInProtection) {
                 textHourPaint.setStyle(Paint.Style.STROKE);
                 textMinutePaint.setStyle(Paint.Style.STROKE);
+                textAmPmPaint.setStyle(Paint.Style.STROKE);
                 //datePaint.setStyle(Paint.Style.STROKE);
             }
 
@@ -260,7 +277,6 @@ public class WatchFace extends CanvasWatchFaceService {
 
         @Override
         public void onCreate(SurfaceHolder holder) {
-
             super.onCreate(holder);
             setWatchFaceStyle(new WatchFaceStyle.Builder(WatchFace.this)
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_SHORT)
@@ -273,10 +289,6 @@ public class WatchFace extends CanvasWatchFaceService {
             resetColors();
 
             mCalendar = Calendar.getInstance();
-        }
-
-        private String formatTwoDigitNumber(int hour) {
-            return String.format("%02d", hour);
         }
 
         @Override
@@ -348,18 +360,35 @@ public class WatchFace extends CanvasWatchFaceService {
             }
 
             // draw digital clock in the middle
-            Rect digitalBounds = new Rect();
-            String digital = formatTwoDigitNumber(mCalendar.get(Calendar.HOUR_OF_DAY)) + formatTwoDigitNumber(mCalendar.get(Calendar.MINUTE));
-            textHourPaint.getTextBounds(digital, 0, digital.length(), digitalBounds);
+            String hour = String.format("%02d", toggle24h ? mCalendar.get(Calendar.HOUR_OF_DAY) : mCalendar.get(Calendar.HOUR));
+            String minute = String.format("%02d", mCalendar.get(Calendar.MINUTE));
+            String am_pm = mCalendar.get(Calendar.AM_PM) == Calendar.AM ? "AM" : "PM";
 
-            canvas.drawText(formatTwoDigitNumber(mCalendar.get(Calendar.HOUR_OF_DAY)), centerX - digitalBounds.width() / 4 - textSpacing / 2, centerY + digitalBounds.height() / 2, textHourPaint);
-            canvas.drawText(formatTwoDigitNumber(mCalendar.get(Calendar.MINUTE)), centerX + digitalBounds.width() / 4 + textSpacing / 2, centerY + digitalBounds.height() / 2, textMinutePaint);
+            String digital = hour + minute + (toggle24h ? "" : am_pm);
+
+            float totalWidth = textHourPaint.measureText(digital) + (toggle24h ? 1 : 2) * textSpacing;
+            float hourWidth = textHourPaint.measureText(hour);
+            float minuteWidth = textHourPaint.measureText(minute);
+
+            float offsetX = centerX - totalWidth / 2;
+            float offsetY = centerY + textSize / 2.5f;
+
+            canvas.drawText(hour, offsetX, offsetY, textHourPaint);
+            offsetX += hourWidth + textSpacing;
+            canvas.drawText(minute, offsetX, offsetY, textMinutePaint);
+            if (!toggle24h) {
+                offsetX += minuteWidth + textSpacing;
+                canvas.drawText(am_pm, offsetX, offsetY, textAmPmPaint);
+
+                // some extra spacing here looks better
+                offsetY += textSize / 4.0f;
+            }
+
+            offsetY += textSize / 2.0f;
 
             // draw current date below digital clock
-            String date = new SimpleDateFormat("MMM dd").format(new Date());
-            Rect dateBounds = new Rect();
-            datePaint.getTextBounds(date, 0, date.length(), dateBounds);
-            canvas.drawText(date, centerX, centerY + dateBounds.height() / 2 + digitalBounds.height(), datePaint);
+            String date = mCalendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()) + " " + mCalendar.get(Calendar.DAY_OF_MONTH);
+            canvas.drawText(date, centerX, offsetY, datePaint);
         }
     }
 }

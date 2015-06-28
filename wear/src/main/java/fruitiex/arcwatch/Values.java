@@ -47,4 +47,11 @@ public class Values {
         editor.commit();
         WatchFace.resetColors();
     }
+    public void resetValues() {
+        SharedPreferences.Editor editor = sharedPref.edit();
+
+        editor.clear();
+        editor.commit();
+        WatchFace.resetColors();
+    }
 }

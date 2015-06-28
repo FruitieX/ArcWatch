@@ -48,8 +48,10 @@ public class WearableListItemLayout extends LinearLayout
 
     @Override
     public void onCenterPosition(boolean animate) {
-        if (mName.getText().equals("toggle24h")) {
+        if (mName.getText().equals("Toggle24h")) {
             ((GradientDrawable) mCircle.getDrawable()).setColor(Color.BLACK);
+        } else if (mName.getText().equals("ResetSettings")) {
+            ((GradientDrawable) mCircle.getDrawable()).setColor(Color.RED);
         } else {
             ((GradientDrawable) mCircle.getDrawable()).setColor(val.getColor((String) mName.getText()));
         }
@@ -58,7 +60,9 @@ public class WearableListItemLayout extends LinearLayout
 
     @Override
     public void onNonCenterPosition(boolean animate) {
-        if (mName.getText().equals("toggle24h")) {
+        if (mName.getText().equals("Toggle24h")) {
+            ((GradientDrawable) mCircle.getDrawable()).setColor(Color.BLACK);
+        } else if (mName.getText().equals("ResetSettings")) {
             ((GradientDrawable) mCircle.getDrawable()).setColor(Color.BLACK);
         } else {
             ((GradientDrawable) mCircle.getDrawable()).setColor(val.getColor((String) mName.getText()));

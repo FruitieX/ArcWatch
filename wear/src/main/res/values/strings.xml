@@ -1,46 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">Arc Watch</string>
     <string name="config_name">Arc Watch Config</string>
-    <string name="title_activity_watch_face_config">WatchFaceConfig</string>
-    <string name="hello_round">Hello Round World!</string>
-    <string name="hello_square">Hello Square World!</string>
 
-    <integer name="hourR">170</integer>
-    <integer name="hourG">160</integer>
-    <integer name="hourB">150</integer>
+    <!-- Configurable settings -->
+    <integer name="HourR">170</integer>
+    <integer name="HourG">160</integer>
+    <integer name="HourB">150</integer>
 
-    <integer name="minuteR">170</integer>
-    <integer name="minuteG">160</integer>
-    <integer name="minuteB">150</integer>
+    <integer name="MinuteR">170</integer>
+    <integer name="MinuteG">160</integer>
+    <integer name="MinuteB">150</integer>
 
-    <integer name="tickR">170</integer>
-    <integer name="tickG">160</integer>
-    <integer name="tickB">150</integer>
+    <integer name="TickR">170</integer>
+    <integer name="TickG">160</integer>
+    <integer name="TickB">150</integer>
 
-    <integer name="textHourR">220</integer>
-    <integer name="textHourG">210</integer>
-    <integer name="textHourB">200</integer>
+    <integer name="TextHourR">220</integer>
+    <integer name="TextHourG">210</integer>
+    <integer name="TextHourB">200</integer>
 
-    <integer name="textMinuteR">170</integer>
-    <integer name="textMinuteG">160</integer>
-    <integer name="textMinuteB">150</integer>
+    <integer name="TextMinuteR">170</integer>
+    <integer name="TextMinuteG">160</integer>
+    <integer name="TextMinuteB">150</integer>
 
-    <integer name="dateR">170</integer>
-    <integer name="dateG">160</integer>
-    <integer name="dateB">150</integer>
+    <integer name="DateR">170</integer>
+    <integer name="DateG">160</integer>
+    <integer name="DateB">150</integer>
 
-    <integer name="lineSize">2</integer>
+    <integer name="Toggle24h">1</integer>
 
-    <integer name="textSize">60</integer>
-    <integer name="smallTextSize">20</integer>
-
+    <!-- "Hardcoded" settings -->
     <integer name="hourSize">12</integer>
     <integer name="hourOffs">50</integer>
     <integer name="minSize">6</integer>
     <integer name="minOffs">25</integer>
+    <integer name="lineSize">2</integer>
 
-    <integer name="tickSize">12</integer>
-
+    <integer name="textSize">60</integer>
+    <integer name="smallTextSize">20</integer>
 </resources>

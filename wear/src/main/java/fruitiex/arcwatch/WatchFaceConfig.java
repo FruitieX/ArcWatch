@@ -9,7 +9,7 @@ import org.jraf.android.androidwearcolorpicker.app.ColorPickActivity;
 
 public class WatchFaceConfig extends Activity implements WearableListView.ClickListener, WearableListView.OnScrollListener {
 
-    public static String[] elements = { "hour", "minute", "textHour", "textMinute", "date", "toggle24h" };
+    public static String[] elements = { "Hour", "Minute", "TextHour", "TextMinute", "Date", "Toggle24h", "ResetSettings" };
     static Values val;
 
     @Override
@@ -34,8 +34,11 @@ public class WatchFaceConfig extends Activity implements WearableListView.ClickL
     @Override
     public void onClick(WearableListView.ViewHolder v) {
         Integer tag = (Integer) v.itemView.getTag();
-        if (elements[tag].equals("toggle24h")) {
-            val.setBoolean("toggle24h", !val.getBoolean("toggle24h"));
+        if (elements[tag].equals("Toggle24h")) {
+            val.setBoolean("Toggle24h", !val.getBoolean("Toggle24h"));
+            finish();
+        } else if (elements[tag].equals("ResetSettings")) {
+            val.resetValues();
             finish();
         } else {
             Intent intent = new ColorPickActivity.IntentBuilder().oldColor(val.getColor(elements[tag])).build(this);
