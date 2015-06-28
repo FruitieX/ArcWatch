@@ -23,6 +23,20 @@ public class Values {
 
         return Color.rgb(r, g, b);
     }
+    public boolean getBoolean(String element) {
+        Resources res = appContext.getResources();
+
+        // NOTE: for some reason getBool doesn't want to play ball, so here's this hack instead.
+        return sharedPref.getInt(element, res.getInteger(res.getIdentifier(element, "integer", appContext.getPackageName()))) == 1 ? true : false;
+    }
+    public void setBoolean(String element, boolean value) {
+        SharedPreferences.Editor editor = sharedPref.edit();
+
+        editor.putInt(element, value ? 1 : 0);
+
+        editor.commit();
+        WatchFace.resetColors();
+    }
     public void setColor(String element, int color) {
         SharedPreferences.Editor editor = sharedPref.edit();
 

@@ -1,6 +1,7 @@
 package fruitiex.arcwatch;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.support.wearable.view.WearableListView;
 import android.util.AttributeSet;
@@ -47,13 +48,21 @@ public class WearableListItemLayout extends LinearLayout
 
     @Override
     public void onCenterPosition(boolean animate) {
-        ((GradientDrawable) mCircle.getDrawable()).setColor(val.getColor((String) mName.getText()));
+        if (mName.getText().equals("toggle24h")) {
+            ((GradientDrawable) mCircle.getDrawable()).setColor(Color.BLACK);
+        } else {
+            ((GradientDrawable) mCircle.getDrawable()).setColor(val.getColor((String) mName.getText()));
+        }
         mName.setAlpha(1f);
     }
 
     @Override
     public void onNonCenterPosition(boolean animate) {
-        ((GradientDrawable) mCircle.getDrawable()).setColor(val.getColor((String) mName.getText()));
+        if (mName.getText().equals("toggle24h")) {
+            ((GradientDrawable) mCircle.getDrawable()).setColor(Color.BLACK);
+        } else {
+            ((GradientDrawable) mCircle.getDrawable()).setColor(val.getColor((String) mName.getText()));
+        }
         mName.setAlpha(mFadedTextAlpha);
     }
 }

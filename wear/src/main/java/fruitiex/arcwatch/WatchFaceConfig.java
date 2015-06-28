@@ -4,13 +4,12 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.wearable.view.WearableListView;
-import android.util.Log;
 
 import org.jraf.android.androidwearcolorpicker.app.ColorPickActivity;
 
 public class WatchFaceConfig extends Activity implements WearableListView.ClickListener, WearableListView.OnScrollListener {
 
-    public static String[] elements = { "hour", "minute", "textHour", "textMinute", "date" };
+    public static String[] elements = { "hour", "minute", "textHour", "textMinute", "date", "toggle24h" };
     static Values val;
 
     @Override
@@ -35,8 +34,13 @@ public class WatchFaceConfig extends Activity implements WearableListView.ClickL
     @Override
     public void onClick(WearableListView.ViewHolder v) {
         Integer tag = (Integer) v.itemView.getTag();
-        Intent intent = new ColorPickActivity.IntentBuilder().oldColor(val.getColor(elements[tag])).build(this);
-        startActivityForResult(intent, tag);
+        if (elements[tag].equals("toggle24h")) {
+            val.setBoolean("toggle24h", !val.getBoolean("toggle24h"));
+            finish();
+        } else {
+            Intent intent = new ColorPickActivity.IntentBuilder().oldColor(val.getColor(elements[tag])).build(this);
+            startActivityForResult(intent, tag);
+        }
     }
 
     @Override
@@ -44,11 +48,10 @@ public class WatchFaceConfig extends Activity implements WearableListView.ClickL
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode != RESULT_CANCELED) {
             int pickedColor = ColorPickActivity.getPickedColor(data);
-            Log.d("ArcWatch", "pickedColor=" + Integer.toHexString(pickedColor));
             val.setColor(elements[requestCode], pickedColor);
             WearableListView listView =
                 (WearableListView) findViewById(R.id.wearable_list);
-            listView.resetLayoutManager();
+            listView.getAdapter().notifyDataSetChanged();
         }
     }
 
