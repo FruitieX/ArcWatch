@@ -34,15 +34,19 @@ public class WatchFaceConfig extends Activity implements WearableListView.ClickL
     @Override
     public void onClick(WearableListView.ViewHolder v) {
         Integer tag = (Integer) v.itemView.getTag();
-        if (elements[tag].equals("Toggle24h")) {
-            val.setBoolean("Toggle24h", !val.getBoolean("Toggle24h"));
-            finish();
-        } else if (elements[tag].equals("ResetSettings")) {
-            val.resetValues();
-            finish();
-        } else {
-            Intent intent = new ColorPickActivity.IntentBuilder().oldColor(val.getColor(elements[tag])).build(this);
-            startActivityForResult(intent, tag);
+        switch (elements[tag]) {
+            case "Toggle24h":
+                val.setBoolean("Toggle24h", !val.getBoolean("Toggle24h"));
+                finish();
+                break;
+            case "ResetSettings":
+                val.resetValues();
+                finish();
+                break;
+            default:
+                Intent intent = new ColorPickActivity.IntentBuilder().oldColor(val.getColor(elements[tag])).build(this);
+                startActivityForResult(intent, tag);
+                break;
         }
     }
 

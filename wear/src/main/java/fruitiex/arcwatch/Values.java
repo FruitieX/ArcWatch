@@ -5,9 +5,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Color;
 
-/**
- * Created by rasse on 4/23/15.
- */
 public class Values {
     SharedPreferences sharedPref;
     Context appContext;
@@ -27,7 +24,7 @@ public class Values {
         Resources res = appContext.getResources();
 
         // NOTE: for some reason getBool doesn't want to play ball, so here's this hack instead.
-        return sharedPref.getInt(element, res.getInteger(res.getIdentifier(element, "integer", appContext.getPackageName()))) == 1 ? true : false;
+        return sharedPref.getInt(element, res.getInteger(res.getIdentifier(element, "integer", appContext.getPackageName()))) == 1;
     }
     public void setBoolean(String element, boolean value) {
         SharedPreferences.Editor editor = sharedPref.edit();

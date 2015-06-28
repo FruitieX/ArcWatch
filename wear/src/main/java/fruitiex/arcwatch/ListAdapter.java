@@ -7,17 +7,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-/**
- * Created by rasse on 4/23/15.
- */
 public final class ListAdapter extends WearableListView.Adapter {
     private String[] mDataset;
-    private final Context mContext;
     private final LayoutInflater mInflater;
 
     // Provide a suitable constructor (depends on the kind of dataset)
     public ListAdapter(Context context, String[] dataset) {
-        mContext = context;
         mInflater = LayoutInflater.from(context);
         mDataset = dataset;
     }
