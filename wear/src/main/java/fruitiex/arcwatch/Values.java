@@ -31,7 +31,7 @@ public class Values {
 
         editor.putInt(element, value ? 1 : 0);
 
-        editor.commit();
+        editor.apply();
         WatchFace.resetColors();
     }
     public void setColor(String element, int color) {
@@ -41,14 +41,14 @@ public class Values {
         editor.putInt(element + "G", Color.green(color));
         editor.putInt(element + "B", Color.blue(color));
 
-        editor.commit();
+        editor.apply();
         WatchFace.resetColors();
     }
     public void resetValues() {
         SharedPreferences.Editor editor = sharedPref.edit();
 
         editor.clear();
-        editor.commit();
+        editor.apply();
         WatchFace.resetColors();
     }
 }
