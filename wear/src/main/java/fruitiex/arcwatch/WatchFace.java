@@ -55,8 +55,9 @@ public class WatchFace extends CanvasWatchFaceService {
         int textMinuteColor = val.getColor("TextMinute");
         int dateColor = val.getColor("Date");
         toggle24h = val.getBoolean("Toggle24h");
-        textSize = toggle24h ? 60 : 40;
-        textSpacing = toggle24h ? 10 : 6;
+        textSize = toggle24h ? 60 : 50;
+        textSpacing = 10;
+        //textSpacing = toggle24h ? 10 : 6;
 
         burninHourPaint = new Paint();
         burninHourPaint.setARGB(255,
@@ -121,7 +122,7 @@ public class WatchFace extends CanvasWatchFaceService {
                 Color.blue(textHourColor));
         textAmPmPaint.setStrokeWidth(lineSize);
         textAmPmPaint.setAntiAlias(true);
-        textAmPmPaint.setTextSize(textSize);
+        textAmPmPaint.setTextSize(smallTextSize);
         textAmPmPaint.setStyle(Paint.Style.FILL);
 
         datePaint = new Paint();
@@ -251,7 +252,6 @@ public class WatchFace extends CanvasWatchFaceService {
             if(inAmbientMode && mBurnInProtection) {
                 textHourPaint.setStyle(Paint.Style.STROKE);
                 textMinutePaint.setStyle(Paint.Style.STROKE);
-                textAmPmPaint.setStyle(Paint.Style.STROKE);
                 //datePaint.setStyle(Paint.Style.STROKE);
             }
 
@@ -358,13 +358,22 @@ public class WatchFace extends CanvasWatchFaceService {
             }
 
             // draw digital clock in the middle
-            String hour = String.format("%02d", toggle24h ? mCalendar.get(Calendar.HOUR_OF_DAY) : mCalendar.get(Calendar.HOUR));
+            String hour;
+            if (toggle24h) {
+                hour = String.format("%02d", mCalendar.get(Calendar.HOUR_OF_DAY));
+            } else {
+                // 12h clocks are weird
+                int hourInt = mCalendar.get(Calendar.HOUR);
+                hourInt = hourInt == 0 ? 12 : hourInt;
+                hour = Integer.toString(hourInt);
+            }
             String minute = String.format("%02d", mCalendar.get(Calendar.MINUTE));
             String am_pm = mCalendar.get(Calendar.AM_PM) == Calendar.AM ? "AM" : "PM";
 
-            String digital = hour + minute + (toggle24h ? "" : am_pm);
+            String digital = hour + minute;
 
             float totalWidth = textHourPaint.measureText(digital) + (toggle24h ? 1 : 2) * textSpacing;
+            totalWidth += toggle24h ? 0 : textAmPmPaint.measureText(am_pm);
             float hourWidth = textHourPaint.measureText(hour);
             float minuteWidth = textHourPaint.measureText(minute);
 
@@ -379,7 +388,7 @@ public class WatchFace extends CanvasWatchFaceService {
                 canvas.drawText(am_pm, offsetX, offsetY, textAmPmPaint);
 
                 // some extra spacing here looks better
-                offsetY += textSize / 4.0f;
+                offsetY += textSize / 10.0f;
             }
 
             offsetY += textSize / 2.0f;
